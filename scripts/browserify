@@ -1,0 +1,57 @@
+#!/usr/bin/env node
+
+/*
+    browserify script
+
+    Builds a browser-compatible version of AWS SDK for Javascript.
+*/
+
+var Browserify = require('browserify')
+    , fs = require('fs')
+    , path = require('path')
+    , bundle_opts = {
+        standalone: 'aws-sdk'
+        }
+    , browserify = Browserify()
+    , config = require('../package.json')
+
+    // get the main file for this project as input.
+    , inputFile = path.join( __dirname, '..', config['main'] )
+
+    // default output file to 'build/browserify'
+    , outputFile = path.join( __dirname, '..', 'build', 'browserify', 'aws-sdk.js' )
+    ;
+
+function include( browserify ) {
+    // aws-sdk dynamically dispatches services,
+    // so browserify needs help including these files.
+    fs.readdirSync( path.join( __dirname, '..', 'lib', 'services', 'api' ))
+    .forEach( function(f) {
+        f = path.basename( f, '.js' );
+        browserify.require( path.join( __dirname, '..', 'lib', 'services', 'api', f), { expose: './services/api/' + f });
+    });
+}
+
+if( require.main === module ) {
+    // add the input file to the files processed by browserify
+    browserify.add( inputFile );
+
+    include( browserify);
+
+    // make the build directory
+    outputFile
+    .split( path.sep )
+    .slice( 1 )
+    .forEach( function( value, index, array ) {
+        var dir = path.join( path.sep, path.join.apply( path, array.slice( 0, index )));
+        if( !fs.existsSync( dir )) {
+            fs.mkdirSync( dir );
+        }
+    });
+
+    // process and output to file
+    browserify.bundle( bundle_opts )
+    .pipe( fs.createWriteStream( outputFile ));
+} else {
+    module.exports = include;
+}

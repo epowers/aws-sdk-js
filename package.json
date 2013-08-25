@@ -53,6 +53,7 @@
         "unit" : "jasmine-node --noColor --coffee test",
         "integration": "cucumber.js",
         "lint" : "jshint lib",
-        "console": "./scripts/console"
+        "console": "./scripts/console",
+        "browserify": "./scripts/browserify"
     }
 }
